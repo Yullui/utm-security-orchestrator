@@ -1,0 +1,119 @@
+# Windows 11 STIG & UTM Orchestration Config
+# This file is token-ready and uses single-quotes to prevent YAML escape errors.
+
+registry_fixes:
+  - id: 'V-253337'
+    description: 'Application event log size must be 32768 KB or greater'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application'
+    value: 'MaxSize'
+    type: 'REG_DWORD'
+    data: 32768
+  - id: 'V-253338'
+    description: 'Security event log size must be 1024000 KB or greater'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\EventLog\Security'
+    value: 'MaxSize'
+    type: 'REG_DWORD'
+    data: 1024000
+  - id: 'V-253339'
+    description: 'System event log size must be 32768 KB or greater'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\EventLog\System'
+    value: 'MaxSize'
+    type: 'REG_DWORD'
+    data: 32768
+  - id: 'V-253359'
+    description: 'Run as different user must be removed from context menus'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer'
+    value: 'ShowRunAsDifferentUserInStart'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253360'
+    description: 'Insecure logons to an SMB server must be disabled'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation'
+    value: 'AllowInsecureGuestAuth'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253361'
+    description: 'Internet connection sharing must be disabled'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections'
+    value: 'NC_ShowSharedAccessUI'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253402'
+    description: 'Passwords must not be saved in the Remote Desktop Client'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+    value: 'DisablePasswordSaving'
+    type: 'REG_DWORD'
+    data: 1
+  - id: 'V-253403'
+    description: 'Local drives must be prevented from sharing with RDP'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+    value: 'fDisableCdm'
+    type: 'REG_DWORD'
+    data: 1
+  - id: 'V-253406'
+    description: 'RDP client connection encryption set to required level'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+    value: 'MinEncryptionLevel'
+    type: 'REG_DWORD'
+    data: 3
+  - id: 'V-253409'
+    description: 'Indexing of encrypted files must be turned off'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search'
+    value: 'AllowIndexingEncryptedStoresOrItems'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253421'
+    description: 'WinRM client must not use Digest authentication'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client'
+    value: 'AllowDigest'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253422'
+    description: 'Prevent Windows apps activation by voice while locked'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy'
+    value: 'LetAppsActivateWithVoiceAboveLock'
+    type: 'REG_DWORD'
+    data: 2
+  - id: 'V-253423'
+    description: 'The convenience PIN for Windows 11 must be disabled'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System'
+    value: 'AllowDomainPINLogon'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253459'
+    description: 'PKU2U authentication using online identities prevented'
+    key: 'HKLM\SYSTEM\CurrentControlSet\Control\Lsa\pku2u'
+    value: 'AllowOnlineID'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-253471'
+    description: 'UAC must automatically deny elevation requests'
+    key: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+    value: 'ConsentPromptBehaviorUser'
+    type: 'REG_DWORD'
+    data: 0
+  - id: 'V-268317'
+    description: 'Copilot in Windows must be disabled'
+    key: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot'
+    value: 'TurnOffWindowsCopilot'
+    type: 'REG_DWORD'
+    data: 1
+
+system_commands:
+  - id: 'V-253285'
+    description: 'Verify PowerShell 2.0 is Disabled/Gone'
+    command: 'powershell.exe if (Get-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root -ErrorAction SilentlyContinue) { Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root -NoRestart }'
+  - id: 'V-253432'
+    description: 'Disable built-in administrator'
+    command: 'net.exe user administrator /active:no'
+
+# DPI Policy for Tokenization Analysis
+dpi_policy:
+  expected_protocols:
+    80: 'http'
+    443: 'https'
+    22: 'ssh'
+  blocked_tokens:
+    - 'malware'
+    - 'backdoor'
+    - 'eicar'
