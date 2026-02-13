@@ -25,8 +25,8 @@ Your repository is ready for GitHub! Here's how to upload it:
 ### Option A: Command Line (Recommended)
 
 ```bash
-# Navigate to your project directory
-cd "C:\Users\userA\Documents\school"
+# Navigate to your project directory (replace with your actual path)
+cd /path/to/utm-security-orchestrator
 
 # Add your GitHub repository as the remote
 git remote add origin https://github.com/YOUR_USERNAME/utm-security-orchestrator.git

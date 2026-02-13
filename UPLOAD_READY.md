@@ -83,7 +83,7 @@ utm-security-orchestrator/
 #    - DO NOT initialize with files
 
 # 2. Run these commands in your project folder:
-cd "C:\Users\userA\Documents\school"
+cd /path/to/utm-security-orchestrator
 git remote add origin https://github.com/YOUR_USERNAME/utm-security-orchestrator.git
 git branch -m master main
 git push -u origin main
