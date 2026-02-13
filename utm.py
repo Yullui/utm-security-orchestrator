@@ -40,6 +40,8 @@ import utm_secrets
 import utm_hardening
 import generate_sbom
 import artifact_collector
+import utm_commando
+from utm_commando import CommandoSimulator, CommandoMode, AttackTechnique, PurpleTeamExercise
 
 
 # --- Color codes for terminal output ---
@@ -314,6 +316,112 @@ class SecurityOrchestrator:
         progress = (self.phase_count / 3) * 100  # Assuming 3 phases max
         return f"{phase_name} {status_text} [{progress:.0f}%] in {elapsed:.2f}s"
 
+    # =========== MANDIANT COMMANDO INTEGRATION ===========
+    def run_commando_tests(self, mode: str = "detection") -> Dict:
+        """
+        Run Mandiant Commando simulation tests for purple team exercises.
+        
+        Modes:
+        - detection: Look for signs of compromise (safe)
+        - simulation: Simulate attacks offline (safe)
+        - validation: Test if defenses would stop attacks (safe)
+        - purple_team: Full red vs blue exercise
+        """
+        phase_start = self.start_phase("COMMANDO PURPLE TEAM")
+        
+        try:
+            mode_enum = CommandoMode[mode.upper()] if hasattr(CommandoMode, mode.upper()) else CommandoMode.DETECTION
+            simulator = CommandoSimulator(mode=mode_enum)
+            
+            # Run a series of defensive tests
+            print(f"\n{Color.BLUE}[*] MANDIANT COMMANDO - Purple Team Exercise{Color.END}")
+            print(f"    Mode: {mode_enum.value} | Detection-focused\n")
+            
+            # Enable key defensive techniques (all safe, offline testing)
+            for technique in [
+                AttackTechnique.EXECUTION,
+                AttackTechnique.PERSISTENCE,
+                AttackTechnique.PRIVILEGE_ESCALATION,
+                AttackTechnique.DEFENSE_EVASION
+            ]:
+                simulator.enable_technique(technique)
+            
+            # Test 1: Command Execution Detection
+            print("  [*] Test 1: Command execution detection...")
+            result1 = simulator.test_command_execution("powershell.exe -NoProfile")
+            if result1.get("is_dangerous"):
+                print(f"      {Color.YELLOW}[!] PowerShell execution detected - requires monitoring{Color.END}")
+            
+            # Test 2: Persistence Mechanisms
+            print("  [*] Test 2: Persistence mechanism detection...")
+            result2 = simulator.test_persistence_mechanism("registry_run_key")
+            print(f"      {Color.YELLOW}[!] Registry Run keys require continuous monitoring{Color.END}")
+            
+            # Test 3: Privilege Escalation
+            print("  [*] Test 3: Privilege escalation paths...")
+            result3 = simulator.test_privilege_escalation("token_impersonation")
+            print(f"      {Color.YELLOW}[!] Token impersonation is a critical attack vector{Color.END}")
+            
+            # Test 4: C2 Detection
+            print("  [*] Test 4: C2 beacon signature detection...")
+            result4 = simulator.test_c2_beacon_detection("dns_tunneling")
+            print(f"      {Color.YELLOW}[!] DNS-based C2 channels require DNS filtering{Color.END}")
+            
+            # Test 5: Lateral Movement
+            print("  [*] Test 5: Lateral movement detection...")
+            result5 = simulator.test_lateral_movement("workstation", "server")
+            print(f"      {Color.YELLOW}[!] SMB/RPC lateral movement common in enterprise{Color.END}")
+            
+            # Generate report
+            report = simulator.generate_report()
+            
+            # Export findings
+            try:
+                simulator.export_findings("commando_findings.json")
+                self._log({"event": "commando_test_completed", "findings_file": "commando_findings.json"})
+            except Exception as e:
+                self._log({"event": "commando_export_failed", "error": str(e)})
+            
+            # Print summary
+            print(f"\n  {Color.GREEN}[OK] Commando test summary:{Color.END}")
+            print(f"      Techniques tested: {report['total_techniques_tested']}")
+            print(f"      Critical findings: {report['critical_findings']}")
+            print(f"      High findings: {report['high_findings']}")
+            
+            elapsed = time.time() - phase_start
+            self.phase_times["COMMANDO"] = elapsed
+            print(f"\n  {Color.GREEN}COMMANDO PASSED {Color.END}[{(self.phase_count / 4) * 100:.0f}%] in {elapsed:.2f}s\n")
+            
+            return report
+            
+        except Exception as e:
+            self._log({"event": "commando_test_failed", "error": str(e)})
+            print(f"  {Color.RED}[!] Commando test failed: {e}{Color.END}")
+            return {"error": str(e), "status": "failed"}
+
+    def generate_purple_team_report(self) -> Dict:
+        """Generate purple team exercise recommendations"""
+        return {
+            "exercise_type": "Mandiant Commando",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "recommendations": [
+                "1. Deploy Splunk or ELK for SIEM correlation",
+                "2. Implement EDR (CrowdStrike, Microsoft Defender, Velociraptor)",
+                "3. Enable Windows Event Log forwarding (4688, 4698, 4720)",
+                "4. Configure firewall rules for Command & Control detection",
+                "5. Establish incident response playbooks for each MITRE ATT&CK technique",
+                "6. Run monthly purple team exercises",
+                "7. Integrate Threat Intelligence feeds (ThreatStream, Shodan, etc)"
+            ],
+            "critical_controls": [
+                "EDR on all endpoints (MITRE ATT&CK detection)",
+                "Network segmentation (DLP, firewall rules)",
+                "Enforce MFA and RBAC",
+                "Regular patching cycle (0-day management)",
+                "Audit log centralization and retention"
+            ]
+        }
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -328,6 +436,8 @@ if __name__ == '__main__':
     parser.add_argument('--log-key', type=str, help='Set HMAC log key (env: UTM_LOG_KEY)')
     parser.add_argument('--policy', type=str, default='registry.yaml', help='Config policy file')
     parser.add_argument('--json', action='store_true', help='Output as JSON')
+    parser.add_argument('--commando', type=str, choices=['detection', 'simulation', 'validation', 'purple_team'], help='Mandiant Commando purple team testing')
+    parser.add_argument('--purple-report', action='store_true', help='Generate purple team exercise recommendations')
     
     args = parser.parse_args()
     
@@ -432,6 +542,27 @@ if __name__ == '__main__':
                 if not args.json:
                     print(f"  ⚠ Could not verify logs: {e}")
                 results['log_verification'] = {'status': 'error', 'reason': str(e)}
+        
+        # Mandiant Commando Purple Team Testing
+        if args.commando:
+            if not args.json:
+                print(f"\n[MANDIANT COMMANDO PURPLE TEAM - {args.commando.upper()}]")
+            commando_report = agent.run_commando_tests(mode=args.commando)
+            results['commando'] = commando_report
+        
+        # Generate purple team recommendations
+        if args.purple_report:
+            if not args.json:
+                print("\n[PURPLE TEAM EXERCISE RECOMMENDATIONS]")
+            purple_recs = agent.generate_purple_team_report()
+            if not args.json:
+                print(f"  {Color.BLUE}Recommendations for continuous improvement:{Color.END}")
+                for rec in purple_recs['recommendations']:
+                    print(f"    - {rec}")
+                print(f"\n  {Color.BLUE}Critical security controls:{Color.END}")
+                for ctrl in purple_recs['critical_controls']:
+                    print(f"    - {ctrl}")
+            results['purple_team'] = purple_recs
         
         # Summary
         if not args.json:
