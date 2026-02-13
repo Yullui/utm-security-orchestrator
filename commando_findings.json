@@ -1,0 +1,67 @@
+{
+  "test_mode": "detection",
+  "timestamp": "2026-02-13T13:08:17.252132",
+  "total_techniques_tested": 3,
+  "techniques": [
+    "T1059",
+    "T1547",
+    "T1134"
+  ],
+  "critical_findings": 1,
+  "high_findings": 1,
+  "total_findings": 3,
+  "findings_summary": {
+    "critical": [
+      {
+        "technique": "T1134 - Access Token Manipulation",
+        "escalation_method": "token_impersonation",
+        "description": "SeImpersonatePrivilege abuse (PrintSpooler, etc)",
+        "stage": "PRIVILEGE_ESCALATION",
+        "detection": "Monitor SeImpersonate events (Windows), sudo logs (Linux)",
+        "mitigation": "Keep OS patched, minimize privileged processes, enable audit logging"
+      }
+    ],
+    "high": [
+      {
+        "technique": "T1547 - Boot/Logon Autostart Execution",
+        "mechanism": "registry_run_key",
+        "vector": "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "stage": "PERSISTENCE",
+        "detection_method": "Monitor file system and registry changes at boot",
+        "recommendation": "Enable audit logging for autostart locations"
+      }
+    ],
+    "all": [
+      {
+        "technique": "T1059 - Command Execution",
+        "command": "powershell.exe -NoProfile",
+        "is_dangerous": true,
+        "stage": "EXECUTION",
+        "recommendation": "Block/alert on suspicious command combinations"
+      },
+      {
+        "technique": "T1547 - Boot/Logon Autostart Execution",
+        "mechanism": "registry_run_key",
+        "vector": "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "stage": "PERSISTENCE",
+        "detection_method": "Monitor file system and registry changes at boot",
+        "recommendation": "Enable audit logging for autostart locations"
+      },
+      {
+        "technique": "T1134 - Access Token Manipulation",
+        "escalation_method": "token_impersonation",
+        "description": "SeImpersonatePrivilege abuse (PrintSpooler, etc)",
+        "stage": "PRIVILEGE_ESCALATION",
+        "detection": "Monitor SeImpersonate events (Windows), sudo logs (Linux)",
+        "mitigation": "Keep OS patched, minimize privileged processes, enable audit logging"
+      }
+    ]
+  },
+  "purple_team_recommendations": [
+    "1. Run regular red team exercises against blue team defenses",
+    "2. Implement SIEM with MITRE ATT&CK correlation",
+    "3. Deploy EDR (Endpoint Detection & Response)",
+    "4. Establish incident response playbooks",
+    "5. Conduct monthly tabletop exercises"
+  ]
+}
